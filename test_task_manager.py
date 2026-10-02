@@ -1,7 +1,26 @@
-"""Initial Task Manager tests."""
+"""Task Manager tests including the empty-title hotfix."""
+
+from collections.abc import Callable
 
 from task import Task
 from task_manager import TaskManager
+
+
+def assert_raises(
+    expected_exception: type[BaseException],
+    function: Callable[..., object],
+    *arguments: object,
+) -> None:
+    """Confirm that a call raises the expected exception."""
+    try:
+        function(*arguments)
+    except expected_exception:
+        return
+    except Exception as error:
+        raise AssertionError(
+            f"expected {expected_exception.__name__}, got {type(error).__name__}"
+        ) from error
+    raise AssertionError(f"expected {expected_exception.__name__}")
 
 
 def test_add_and_list_tasks() -> None:
@@ -18,9 +37,23 @@ def test_complete_task() -> None:
     assert task.display() == "[Done] Record video"
 
 
+def test_empty_title_is_rejected() -> None:
+    assert_raises(ValueError, Task, "")
+    assert_raises(ValueError, Task, "   ")
+
+
+def test_non_text_title_is_rejected() -> None:
+    assert_raises(TypeError, Task, 123)
+
+
 def run_tests() -> int:
     """Run all test groups and return the failure count."""
-    tests = [test_add_and_list_tasks, test_complete_task]
+    tests = [
+        test_add_and_list_tasks,
+        test_complete_task,
+        test_empty_title_is_rejected,
+        test_non_text_title_is_rejected,
+    ]
     failures = 0
     for test in tests:
         try:
@@ -35,3 +68,4 @@ def run_tests() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(run_tests())
+
